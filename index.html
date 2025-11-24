@@ -2,7 +2,7 @@
 <html lang="ms">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Sistem Keberadaan Pegawai JNNT</title>
     
     <!-- PWA Settings -->
@@ -27,11 +27,29 @@
               secondary: '#64748b', // slate-500
               success: '#10b981', // emerald-500
               danger: '#ef4444', // red-500
+            },
+            screens: {
+              'xs': '475px',
             }
           }
         }
       }
     </script>
+    <style>
+      /* Ensure full height on mobile browsers */
+      html, body, #root {
+        height: 100%;
+        overflow: hidden; /* Prevent body scroll, handle internally */
+      }
+      /* Hide scrollbar for clean UI but keep functionality */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
     <script type="importmap">
 {
   "imports": {

@@ -6,7 +6,8 @@ import Dashboard from './components/Dashboard';
 import MovementForm from './components/MovementForm';
 import AdminPanel from './components/AdminPanel';
 import Search from './components/Search';
-import { LayoutDashboard, Users, FileText, Search as SearchIcon, Settings, LogOut, UserCircle, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import Profile from './components/Profile';
+import { LayoutDashboard, FileText, Search as SearchIcon, Settings, LogOut, UserCircle, Loader2, RefreshCw, WifiOff, UserCog, PlusCircle } from 'lucide-react';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<Staff | null>(null);
@@ -16,6 +17,7 @@ const App: React.FC = () => {
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [networkError, setNetworkError] = useState(false);
 
   // Login State
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
@@ -51,6 +53,7 @@ const App: React.FC = () => {
 
   const refreshData = async (silent = false) => {
     if (!silent) setIsLoading(true);
+    setNetworkError(false);
     try {
         const staff = await db.getStaff();
         const moves = await db.getMovements();
@@ -62,6 +65,7 @@ const App: React.FC = () => {
         setMovements(moves);
     } catch (e) {
         console.error("Failed to load data", e);
+        setNetworkError(true);
     } finally {
         if (!silent) setIsLoading(false);
     }
@@ -73,35 +77,30 @@ const App: React.FC = () => {
     setLoginError('');
 
     try {
-        // Fetch fresh data to ensure login is accurate
         const staffData = await db.getStaff();
         
-        // Robust comparison: Trim inputs and ignore case for username
+        if (staffData.length === 0) throw new Error("Empty data returned");
+        
         const inputUsername = loginForm.username.trim();
         const inputPassword = loginForm.password.trim();
 
         const staff = staffData.find(s => {
-             // Handle potential undefined/null data
              const sUser = (s.username || '').trim();
              const sPass = (s.password || '').trim();
-             
-             // Username case-insensitive, password case-sensitive
              return sUser.toLowerCase() === inputUsername.toLowerCase() && sPass === inputPassword;
         });
     
         if (staff) {
-          // Save session
           localStorage.setItem('sppks_user', JSON.stringify(staff));
-          
           setUser(staff);
-          // Only refresh full data if we haven't already
           if (staffList.length === 0) refreshData();
           setActiveTab('dashboard');
         } else {
-          setLoginError('Username atau Password salah. Sila semak ejaan (Case Sensitive pada password).');
+          setLoginError('Username atau Password salah.');
         }
     } catch (e) {
-        setLoginError('Ralat sambungan ke Google Sheets. Sila cuba lagi.');
+        setLoginError('Ralat sambungan. Sila cuba guna Hotspot.');
+        setNetworkError(true);
     } finally {
         setIsLoggingIn(false);
     }
@@ -125,20 +124,16 @@ const App: React.FC = () => {
                 <p className="text-slate-500 text-xs font-medium uppercase tracking-widest">Jemaah Nazir Negeri Terengganu</p>
             </div>
             <div className="p-8 bg-slate-50">
-                {!isLoading && staffList.length === 0 && (
-                   <div className="mb-6 bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-lg text-xs text-left flex gap-2">
-                      <AlertCircle className="shrink-0 text-yellow-600" size={16} />
+                {networkError && (
+                   <div className="mb-6 bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg text-xs text-left flex gap-3 animate-pulse">
+                      <WifiOff className="shrink-0 text-red-600" size={20} />
                       <div>
-                        <p className="font-bold mb-1">Pangkalan Data Kosong</p>
-                        <p>Data Admin mungkin belum dimasukkan atau gagal dibaca dari Google Sheets. Sila pastikan format data betul.</p>
-                        <ul className="list-disc pl-4 mt-1 space-y-1 opacity-80">
-                          <li>Username: <b>admin</b></li>
-                          <li>Password: <b>123456</b></li>
-                        </ul>
+                        <p className="font-bold mb-1">Ralat Sambungan / Firewall</p>
+                        <p>Gagal menghubungi pangkalan data. Sila cuba sambung ke Hotspot Telefon.</p>
                       </div>
                    </div>
                 )}
-
+                
                 <form onSubmit={handleLogin} className="space-y-6">
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-2">Username</label>
@@ -172,10 +167,6 @@ const App: React.FC = () => {
                     >
                         {isLoggingIn ? <Loader2 className="animate-spin" size={20} /> : 'Log Masuk'}
                     </button>
-                    
-                    <div className="mt-4 text-center text-xs text-slate-400">
-                       <p>Sila log masuk untuk mengemaskini keberadaan.</p>
-                    </div>
                 </form>
             </div>
         </div>
@@ -183,21 +174,19 @@ const App: React.FC = () => {
     );
   }
 
-  // Main App Interface
+  // --- Main App Interface (Responsive) ---
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
+    <div className="h-[100dvh] bg-slate-50 flex flex-col md:flex-row font-sans overflow-hidden">
       
-      {/* Sidebar Navigation */}
-      <aside className="bg-white w-full md:w-64 border-r border-slate-200 flex flex-col md:h-screen sticky top-0 z-20">
+      {/* DESKTOP SIDEBAR (Hidden on Mobile) */}
+      <aside className="hidden md:flex bg-white w-64 border-r border-slate-200 flex-col h-full z-20 shadow-sm">
         <div className="p-6 border-b border-slate-100 flex flex-col items-center text-center gap-3">
           <img src={LOGO_URL} alt="Logo" className="w-16 h-auto drop-shadow-sm" />
           <div>
-            <h1 className="font-bold text-slate-800 text-sm leading-tight">SISTEM KEBERADAAN PEGAWAI JNNT</h1>
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-1">Jemaah Nazir Negeri Terengganu</p>
+            <h1 className="font-bold text-slate-800 text-sm leading-tight">SPPKS JNNT</h1>
           </div>
         </div>
 
-        {/* User Profile Mini */}
         <div className="p-4 bg-slate-50 m-4 rounded-xl border border-slate-100 flex items-center gap-3">
              <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-500">
                 <UserCircle size={24} />
@@ -209,79 +198,56 @@ const App: React.FC = () => {
         </div>
 
         <nav className="flex-1 px-4 space-y-2 py-4 overflow-y-auto">
-          <NavItem 
-            id="dashboard" 
-            label="Dashboard" 
-            icon={<LayoutDashboard size={20}/>} 
-            active={activeTab} 
-            onClick={setActiveTab} 
-          />
-          <NavItem 
-            id="search" 
-            label="Semakan Status" 
-            icon={<SearchIcon size={20}/>} 
-            active={activeTab} 
-            onClick={setActiveTab} 
-          />
-          <NavItem 
-            id="movement" 
-            label="Rekod Pergerakan" 
-            icon={<FileText size={20}/>} 
-            active={activeTab} 
-            onClick={setActiveTab} 
-          />
+          <NavItem id="dashboard" label="Dashboard" icon={<LayoutDashboard size={20}/>} active={activeTab} onClick={setActiveTab} />
+          <NavItem id="search" label="Semakan" icon={<SearchIcon size={20}/>} active={activeTab} onClick={setActiveTab} />
+          <NavItem id="movement" label="Pergerakan" icon={<PlusCircle size={20}/>} active={activeTab} onClick={setActiveTab} />
+          <NavItem id="profile" label="Profil" icon={<UserCog size={20}/>} active={activeTab} onClick={setActiveTab} />
           
           {user.role === UserRole.ADMIN && (
-            <>
-                <div className="pt-4 pb-2">
-                    <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Admin</p>
-                </div>
-                <NavItem 
-                    id="admin" 
-                    label="Pengurusan Pegawai" 
-                    icon={<Settings size={20}/>} 
-                    active={activeTab} 
-                    onClick={setActiveTab} 
-                />
-            </>
+             <NavItem id="admin" label="Admin Panel" icon={<Settings size={20}/>} active={activeTab} onClick={setActiveTab} />
           )}
         </nav>
 
         <div className="p-4 border-t border-slate-200 space-y-2">
-          {/* Manual Refresh Button */}
-          <button
-             onClick={() => refreshData()}
-             className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-lg transition-colors text-sm font-medium"
-          >
-             <RefreshCw size={20} className={isLoading ? "animate-spin" : ""} /> Kemaskini Data
+          <button onClick={() => refreshData()} className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-lg text-sm font-medium">
+             <RefreshCw size={20} className={isLoading ? "animate-spin" : ""} /> Kemaskini
           </button>
-          
-          <button 
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
-          >
-            <LogOut size={20} /> Log Keluar
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium">
+            <LogOut size={20} /> Keluar
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 p-4 md:p-8 overflow-y-auto h-screen relative">
+      {/* MOBILE HEADER (Visible only on Mobile) */}
+      <header className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center z-30 shadow-sm shrink-0 h-16">
+          <div className="flex items-center gap-3">
+              <img src={LOGO_URL} alt="Logo" className="w-8 h-8" />
+              <div>
+                  <h1 className="font-bold text-slate-800 text-sm leading-none">SPPKS JNNT</h1>
+                  <p className="text-[10px] text-slate-500">Jemaah Nazir Terengganu</p>
+              </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => refreshData()} className="p-2 text-slate-500 hover:bg-slate-100 rounded-full">
+                <RefreshCw size={20} className={isLoading ? "animate-spin" : ""} />
+            </button>
+            <button onClick={handleLogout} className="p-2 text-red-500 hover:bg-red-50 rounded-full">
+                <LogOut size={20} />
+            </button>
+          </div>
+      </header>
+
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 relative pb-20 md:pb-0">
         {isLoading && (
             <div className="absolute top-0 left-0 w-full h-1 bg-blue-100 overflow-hidden z-50">
                 <div className="h-full bg-primary animate-progress"></div>
             </div>
         )}
         
-        <div className="max-w-5xl mx-auto">
-          {activeTab === 'dashboard' && (
-             <Dashboard staffList={staffList} />
-          )}
-
-          {activeTab === 'search' && (
-             <Search staffList={staffList} movements={movements} />
-          )}
-
+        <div className="max-w-5xl mx-auto p-4 md:p-8 min-h-full">
+          {activeTab === 'dashboard' && <Dashboard staffList={staffList} />}
+          {activeTab === 'search' && <Search staffList={staffList} movements={movements} />}
           {activeTab === 'movement' && (
              <MovementForm 
                currentUser={user} 
@@ -289,28 +255,64 @@ const App: React.FC = () => {
                myMovements={movements.filter(m => String(m.staffId) === String(user.id)).sort((a,b) => new Date(b.dateOut).getTime() - new Date(a.dateOut).getTime())}
              />
           )}
-
-          {activeTab === 'admin' && user.role === UserRole.ADMIN && (
-             <AdminPanel staffList={staffList} onUpdate={refreshData} />
-          )}
+          {activeTab === 'profile' && <Profile currentUser={user} onUpdate={refreshData} />}
+          {activeTab === 'admin' && user.role === UserRole.ADMIN && <AdminPanel staffList={staffList} onUpdate={refreshData} />}
         </div>
       </main>
+
+      {/* MOBILE BOTTOM NAVIGATION (Visible only on Mobile) */}
+      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 flex justify-around items-center px-2 py-2 z-40 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+         <MobileNavItem id="dashboard" label="Utama" icon={<LayoutDashboard size={20}/>} active={activeTab} onClick={setActiveTab} />
+         <MobileNavItem id="search" label="Carian" icon={<SearchIcon size={20}/>} active={activeTab} onClick={setActiveTab} />
+         
+         {/* Highlighted 'Add Movement' Button */}
+         <button 
+            onClick={() => setActiveTab('movement')}
+            className={`flex flex-col items-center justify-center -mt-6 rounded-full w-14 h-14 shadow-lg border-4 border-slate-50 transition-all ${activeTab === 'movement' ? 'bg-primary text-white' : 'bg-blue-600 text-white'}`}
+         >
+             <PlusCircle size={28} />
+         </button>
+
+         {user.role === UserRole.ADMIN ? (
+             <MobileNavItem id="admin" label="Admin" icon={<Settings size={20}/>} active={activeTab} onClick={setActiveTab} />
+         ) : (
+             <MobileNavItem id="profile" label="Profil" icon={<UserCog size={20}/>} active={activeTab} onClick={setActiveTab} />
+         )}
+         
+         {/* If Admin, we need profile too. Since max usually 5 slots, let's toggle content or add Profile if Admin is present in a menu. 
+             For simplicity, Admin sees Admin, Staff sees Profile. Both can access Profile via top right? 
+             Let's Keep simple: 5 slots if Admin.
+         */}
+         {user.role === UserRole.ADMIN && (
+             <MobileNavItem id="profile" label="Profil" icon={<UserCog size={20}/>} active={activeTab} onClick={setActiveTab} />
+         )}
+      </nav>
+
     </div>
   );
 };
 
-// Sub-component for Navigation Item
+// Helper Components
 const NavItem: React.FC<{id: string, label: string, icon: React.ReactNode, active: string, onClick: (id: string) => void}> = ({ id, label, icon, active, onClick }) => (
   <button 
     onClick={() => onClick(id)}
     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-      active === id 
-        ? 'bg-primary text-white shadow-md shadow-blue-900/20' 
-        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+      active === id ? 'bg-primary text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'
+    }`}
+  >
+    {icon} {label}
+  </button>
+);
+
+const MobileNavItem: React.FC<{id: string, label: string, icon: React.ReactNode, active: string, onClick: (id: string) => void}> = ({ id, label, icon, active, onClick }) => (
+  <button 
+    onClick={() => onClick(id)}
+    className={`flex flex-col items-center justify-center w-16 py-1 gap-1 rounded-lg transition-colors ${
+      active === id ? 'text-primary' : 'text-slate-400 hover:text-slate-600'
     }`}
   >
     {icon}
-    {label}
+    <span className="text-[10px] font-medium leading-none">{label}</span>
   </button>
 );
 

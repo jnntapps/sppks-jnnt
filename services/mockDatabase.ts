@@ -113,6 +113,30 @@ export const db = {
     });
     return payload;
   },
+
+  updateMovement: async (movement: Movement) => {
+    // Recalculate status frequency in case dates changed
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const dRet = new Date(movement.dateReturn);
+    dRet.setHours(0,0,0,0);
+    const statusFreq = dRet >= today ? StaffStatus.OUT_OF_OFFICE : StaffStatus.IN_OFFICE;
+
+    const payload = { ...movement, statusFrequency: statusFreq };
+
+    await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "updateMovement", payload })
+    });
+    return payload;
+  },
+
+  deleteMovement: async (id: string) => {
+    await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "deleteMovement", payload: { id } })
+    });
+  },
   
   // Logic to sync status based on latest movements
   syncStaffStatus: async (staffList: Staff[], movementList: Movement[]) => {

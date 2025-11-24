@@ -1,4 +1,5 @@
 {
   "name": "Sistem Keberadaan Pegawai JNNT",
-  "description": "Sistem pemantauan keberadaan pegawai Jemaah Nazir Negeri Terengganu."
+  "description": "Sistem pemantauan keberadaan pegawai Jemaah Nazir Negeri Terengganu.",
+  "requestFramePermissions": []
 }
