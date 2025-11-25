@@ -7,7 +7,8 @@ import MovementForm from './components/MovementForm';
 import AdminPanel from './components/AdminPanel';
 import Search from './components/Search';
 import Profile from './components/Profile';
-import { LayoutDashboard, FileText, Search as SearchIcon, Settings, LogOut, UserCircle, Loader2, RefreshCw, WifiOff, UserCog, PlusCircle } from 'lucide-react';
+import Reports from './components/Reports';
+import { LayoutDashboard, FileText, Search as SearchIcon, Settings, LogOut, UserCircle, Loader2, RefreshCw, WifiOff, UserCog, PlusCircle, PieChart } from 'lucide-react';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<Staff | null>(null);
@@ -120,7 +121,7 @@ const App: React.FC = () => {
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
             <div className="bg-white p-8 text-center border-b border-slate-100">
                 <img src={LOGO_URL} alt="Jata Negara" className="h-24 mx-auto mb-4" />
-                <h1 className="text-xl font-bold text-slate-800 mb-1 leading-tight">SISTEM KEBERADAAN PEGAWAI JNNT</h1>
+                <h1 className="text-xl font-bold text-slate-800 mb-1 leading-tight">SISTEM PEMANTAUAN PERGERAKAN & KEBERADAAN STAF (SPPKS)</h1>
                 <p className="text-slate-500 text-xs font-medium uppercase tracking-widest">Jemaah Nazir Negeri Terengganu</p>
             </div>
             <div className="p-8 bg-slate-50">
@@ -179,7 +180,7 @@ const App: React.FC = () => {
     <div className="h-[100dvh] bg-slate-50 flex flex-col md:flex-row font-sans overflow-hidden">
       
       {/* DESKTOP SIDEBAR (Hidden on Mobile) */}
-      <aside className="hidden md:flex bg-white w-64 border-r border-slate-200 flex-col h-full z-20 shadow-sm">
+      <aside className="hidden md:flex bg-white w-64 border-r border-slate-200 flex-col h-full z-20 shadow-sm print:hidden">
         <div className="p-6 border-b border-slate-100 flex flex-col items-center text-center gap-3">
           <img src={LOGO_URL} alt="Logo" className="w-16 h-auto drop-shadow-sm" />
           <div>
@@ -201,6 +202,7 @@ const App: React.FC = () => {
           <NavItem id="dashboard" label="Dashboard" icon={<LayoutDashboard size={20}/>} active={activeTab} onClick={setActiveTab} />
           <NavItem id="search" label="Semakan" icon={<SearchIcon size={20}/>} active={activeTab} onClick={setActiveTab} />
           <NavItem id="movement" label="Pergerakan" icon={<PlusCircle size={20}/>} active={activeTab} onClick={setActiveTab} />
+          <NavItem id="reports" label="Laporan" icon={<FileText size={20}/>} active={activeTab} onClick={setActiveTab} />
           <NavItem id="profile" label="Profil" icon={<UserCog size={20}/>} active={activeTab} onClick={setActiveTab} />
           
           {user.role === UserRole.ADMIN && (
@@ -219,7 +221,7 @@ const App: React.FC = () => {
       </aside>
 
       {/* MOBILE HEADER (Visible only on Mobile) */}
-      <header className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center z-30 shadow-sm shrink-0 h-16">
+      <header className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center z-30 shadow-sm shrink-0 h-16 print:hidden">
           <div className="flex items-center gap-3">
               <img src={LOGO_URL} alt="Logo" className="w-8 h-8" />
               <div>
@@ -240,12 +242,12 @@ const App: React.FC = () => {
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 relative pb-20 md:pb-0">
         {isLoading && (
-            <div className="absolute top-0 left-0 w-full h-1 bg-blue-100 overflow-hidden z-50">
+            <div className="absolute top-0 left-0 w-full h-1 bg-blue-100 overflow-hidden z-50 print:hidden">
                 <div className="h-full bg-primary animate-progress"></div>
             </div>
         )}
         
-        <div className="max-w-5xl mx-auto p-4 md:p-8 min-h-full">
+        <div className="max-w-5xl mx-auto p-4 md:p-8 min-h-full print:p-0 print:max-w-none">
           {activeTab === 'dashboard' && <Dashboard staffList={staffList} />}
           {activeTab === 'search' && <Search staffList={staffList} movements={movements} />}
           {activeTab === 'movement' && (
@@ -255,35 +257,32 @@ const App: React.FC = () => {
                myMovements={movements.filter(m => String(m.staffId) === String(user.id)).sort((a,b) => new Date(b.dateOut).getTime() - new Date(a.dateOut).getTime())}
              />
           )}
+          {activeTab === 'reports' && <Reports staffList={staffList} movements={movements} />}
           {activeTab === 'profile' && <Profile currentUser={user} onUpdate={refreshData} />}
           {activeTab === 'admin' && user.role === UserRole.ADMIN && <AdminPanel staffList={staffList} onUpdate={refreshData} />}
         </div>
       </main>
 
       {/* MOBILE BOTTOM NAVIGATION (Visible only on Mobile) */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 flex justify-around items-center px-2 py-2 z-40 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 grid grid-cols-5 items-center px-1 py-2 z-40 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] print:hidden">
          <MobileNavItem id="dashboard" label="Utama" icon={<LayoutDashboard size={20}/>} active={activeTab} onClick={setActiveTab} />
          <MobileNavItem id="search" label="Carian" icon={<SearchIcon size={20}/>} active={activeTab} onClick={setActiveTab} />
          
          {/* Highlighted 'Add Movement' Button */}
-         <button 
-            onClick={() => setActiveTab('movement')}
-            className={`flex flex-col items-center justify-center -mt-6 rounded-full w-14 h-14 shadow-lg border-4 border-slate-50 transition-all ${activeTab === 'movement' ? 'bg-primary text-white' : 'bg-blue-600 text-white'}`}
-         >
-             <PlusCircle size={28} />
-         </button>
+         <div className="relative -top-5 flex justify-center">
+             <button 
+                onClick={() => setActiveTab('movement')}
+                className={`flex flex-col items-center justify-center rounded-full w-14 h-14 shadow-lg border-4 border-slate-50 transition-all ${activeTab === 'movement' ? 'bg-primary text-white scale-110' : 'bg-blue-600 text-white'}`}
+             >
+                 <PlusCircle size={28} />
+             </button>
+         </div>
 
+         <MobileNavItem id="reports" label="Laporan" icon={<FileText size={20}/>} active={activeTab} onClick={setActiveTab} />
+         
          {user.role === UserRole.ADMIN ? (
              <MobileNavItem id="admin" label="Admin" icon={<Settings size={20}/>} active={activeTab} onClick={setActiveTab} />
          ) : (
-             <MobileNavItem id="profile" label="Profil" icon={<UserCog size={20}/>} active={activeTab} onClick={setActiveTab} />
-         )}
-         
-         {/* If Admin, we need profile too. Since max usually 5 slots, let's toggle content or add Profile if Admin is present in a menu. 
-             For simplicity, Admin sees Admin, Staff sees Profile. Both can access Profile via top right? 
-             Let's Keep simple: 5 slots if Admin.
-         */}
-         {user.role === UserRole.ADMIN && (
              <MobileNavItem id="profile" label="Profil" icon={<UserCog size={20}/>} active={activeTab} onClick={setActiveTab} />
          )}
       </nav>
@@ -307,12 +306,12 @@ const NavItem: React.FC<{id: string, label: string, icon: React.ReactNode, activ
 const MobileNavItem: React.FC<{id: string, label: string, icon: React.ReactNode, active: string, onClick: (id: string) => void}> = ({ id, label, icon, active, onClick }) => (
   <button 
     onClick={() => onClick(id)}
-    className={`flex flex-col items-center justify-center w-16 py-1 gap-1 rounded-lg transition-colors ${
+    className={`w-full flex flex-col items-center justify-center py-1 gap-1 rounded-lg transition-colors min-w-0 ${
       active === id ? 'text-primary' : 'text-slate-400 hover:text-slate-600'
     }`}
   >
     {icon}
-    <span className="text-[10px] font-medium leading-none">{label}</span>
+    <span className="text-[10px] font-medium leading-none truncate w-full text-center px-0.5">{label}</span>
   </button>
 );
 
