@@ -1,6 +1,6 @@
 {
-  "name": "Sistem Keberadaan Pegawai JNNT",
-  "short_name": "SPPKS JNNT",
+  "name": "Sistem Pemantauan Pergerakan & Keberadaan Staf (SPPKS)",
+  "short_name": "SPPKS",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

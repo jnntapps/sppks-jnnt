@@ -1,3 +1,4 @@
+
 export enum StaffStatus {
   IN_OFFICE = 'Dalam Pejabat',
   OUT_OF_OFFICE = 'Keluar',
@@ -16,6 +17,7 @@ export interface Staff {
   password?: string; // Optional for security when listing
   role: UserRole;
   currentStatus: StaffStatus;
+  rank?: number; // Added for manual ordering
 }
 
 export interface Movement {
